@@ -1,3 +1,13 @@
+function updateScrubberValue() {
+  chrome.storage.local.get("currentTimeRatio", function (data) {
+    const currentTimeRatio = data.currentTimeRatio;
+    if (currentTimeRatio !== undefined) {
+      const scrubberValue = Math.round(currentTimeRatio * 100);
+      document.getElementById("scrubber").value = scrubberValue;
+    }
+  });
+}
+
 function loadSettings() {
   chrome.storage.sync.get("api_key", function (data) {
     const apiKey = data.api_key;
@@ -5,6 +15,10 @@ function loadSettings() {
       document.getElementById("api-key").value = apiKey;
     }
   });
+}
+
+function continuouslyUpdateScrubberValue() {
+  setInterval(updateScrubberValue, 100);
 }
 
 document.getElementById("save-api-key").addEventListener("click", function () {
@@ -28,9 +42,30 @@ document.getElementById("scrubber").addEventListener("input", function () {
     chrome.tabs.sendMessage(tabs[0].id, {
       action: "scrub",
       value: scrubberValue,
+    }, function () {
+      updateScrubberValue();
     });
   });
 });
 
-// Load settings when the popup is opened
+updateScrubberValue();
+
 loadSettings();
+
+continuouslyUpdateScrubberValue();
+
+document.addEventListener('DOMContentLoaded', function () {
+  const popupPort = chrome.runtime.connect({ name: 'popup' });
+
+  popupPort.onMessage.addListener(function (message) {
+    if (message.currentTimeRatio !== undefined) {
+      const scrubberValue = Math.round(message.currentTimeRatio * 100);
+      document.getElementById("scrubber").value = scrubberValue;
+    }
+  });
+
+  // Cleanup when the popup is closed
+  window.addEventListener('unload', function () {
+    popupPort.disconnect();
+  });
+});

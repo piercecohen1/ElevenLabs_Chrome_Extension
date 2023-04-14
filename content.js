@@ -1,3 +1,14 @@
+let popupPort = null;
+
+chrome.runtime.onConnect.addListener(function (port) {
+  if (port.name === 'popup') {
+    popupPort = port;
+    port.onDisconnect.addListener(function () {
+      popupPort = null;
+    });
+  }
+});
+
 let audioElement = new Audio();
 let playState = 'stopped';
 
@@ -22,7 +33,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     toggleAudioPlayback();
   } else if (request.action === 'scrub') {
     const scrubberValue = request.value;
-    const scrubberRatio = scrubberValue / 100;
+    const scrubberMax = 100;
+    const scrubberRatio = scrubberValue / scrubberMax;
     const scrubbedTime = scrubberRatio * audioElement.duration;
     audioElement.currentTime = scrubbedTime;
   } else if (request.action === 'read-aloud') {
@@ -66,3 +78,22 @@ async function getTextToSpeechURL(voiceId, apiKey, text) {
     throw new Error(`Error: ${response.statusText}`);
   }
 }
+
+function sendCurrentTimeRatio() {
+  if (audioElement && audioElement.duration > 0) {
+    const currentTimeRatio = audioElement.currentTime / audioElement.duration;
+    chrome.storage.local.set({ currentTimeRatio: currentTimeRatio });
+  }
+}
+
+audioElement.addEventListener("timeupdate", sendCurrentTimeRatio);
+
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.action === "scrub") {
+    const scrubberValue = request.value;
+    const scrubberMax = 100;
+    const scrubberRatio = scrubberValue / scrubberMax;
+    const scrubbedTime = scrubberRatio * audioElement.duration;
+    audioElement.currentTime = scrubbedTime;
+  }
+});
