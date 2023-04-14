@@ -10,7 +10,7 @@ async function getVoices(apiKey) {
     const response = await fetch(url, requestOptions);
     if (response.status === 200) {
       const data = await response.json();
-      console.log("Get voices response:", data);  // Added log statement
+      console.log("Get voices response:", data);
       return data.voices;
     } else {
       throw new Error(`Error: ${response.statusText}`);
