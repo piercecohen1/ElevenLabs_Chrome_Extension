@@ -8,7 +8,7 @@ chrome.runtime.onInstalled.addListener(function () {
 
 chrome.contextMenus.onClicked.addListener(function (info) {
   if (info.menuItemId === "read-aloud") {
-    chrome.storage.sync.get("api_key", function (data) {
+    chrome.storage.local.get("api_key", function (data) {
       const api_key = data.api_key;
 
       chrome.tabs.executeScript(

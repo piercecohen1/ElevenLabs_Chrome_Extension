@@ -9,7 +9,7 @@ function updateScrubberValue() {
 }
 
 function loadSettings() {
-  chrome.storage.sync.get("api_key", function (data) {
+  chrome.storage.local.get("api_key", function (data) {
     const apiKey = data.api_key;
     if (apiKey) {
       document.getElementById("api-key").value = apiKey;
@@ -23,7 +23,7 @@ function continuouslyUpdateScrubberValue() {
 
 document.getElementById("save-api-key").addEventListener("click", function () {
   const api_key = document.getElementById("api-key").value;
-  chrome.storage.sync.set({ api_key: api_key }, function () {
+  chrome.storage.local.set({ api_key: api_key }, function () {
     alert("API Key saved successfully!");
   });
 });
@@ -63,6 +63,19 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById("scrubber").value = scrubberValue;
     }
   });
+
+document.getElementById("playback-speed").addEventListener("change", function () {
+  const playbackSpeed = parseFloat(document.getElementById("playback-speed").value);
+  chrome.storage.local.set({ playback_speed: playbackSpeed }, function () {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: "set-playback-speed",
+        value: playbackSpeed,
+      });
+    });
+  });
+});
+
 
   // Cleanup when the popup is closed
   window.addEventListener('unload', function () {

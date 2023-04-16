@@ -55,8 +55,11 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       .catch((error) => {
         console.log(error);
       });
-  }
-});
+    } else if (request.action === 'set-playback-speed') {
+      const playbackSpeed = request.value;
+      audioElement.playbackRate = playbackSpeed;
+    }
+  });
 
 async function getTextToSpeechURL(voiceId, apiKey, text) {
   const apiEndpoint = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
