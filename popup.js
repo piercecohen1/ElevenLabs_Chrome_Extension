@@ -55,30 +55,15 @@ loadSettings();
 continuouslyUpdateScrubberValue();
 
 document.addEventListener('DOMContentLoaded', function () {
-  const popupPort = chrome.runtime.connect({ name: 'popup' });
-
-  popupPort.onMessage.addListener(function (message) {
-    if (message.currentTimeRatio !== undefined) {
-      const scrubberValue = Math.round(message.currentTimeRatio * 100);
-      document.getElementById("scrubber").value = scrubberValue;
-    }
-  });
-
-document.getElementById("playback-speed").addEventListener("change", function () {
-  const playbackSpeed = parseFloat(document.getElementById("playback-speed").value);
-  chrome.storage.local.set({ playback_speed: playbackSpeed }, function () {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, {
-        action: "set-playback-speed",
-        value: playbackSpeed,
+  document.getElementById("playback-speed").addEventListener("change", function () {
+    const playbackSpeed = parseFloat(document.getElementById("playback-speed").value);
+    chrome.storage.local.set({ playback_speed: playbackSpeed }, function () {
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: "set-playback-speed",
+          value: playbackSpeed,
+        });
       });
     });
-  });
-});
-
-
-  // Cleanup when the popup is closed
-  window.addEventListener('unload', function () {
-    popupPort.disconnect();
   });
 });

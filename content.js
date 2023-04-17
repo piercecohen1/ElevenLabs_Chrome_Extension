@@ -99,4 +99,30 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     const scrubbedTime = scrubberRatio * audioElement.duration;
     audioElement.currentTime = scrubbedTime;
   }
+
+chrome.runtime.onConnect.addListener(port => {
+  if (port.name === 'popup') {
+    port.onMessage.addListener(messageHandler);
+    port.onDisconnect.addListener(() => {
+      port.onMessage.removeListener(messageHandler);
+    });
+  }
+});
+
+function messageHandler(message, port){
+  switch(message.action) {
+    case 'toggle-playback':
+      toggleAudioPlayback();
+      break;
+    case 'scrub':
+      const scrubberValue = message.value;
+      const scrubberMax = 100;
+      const scrubberRatio = scrubberValue / scrubberMax;
+      const scrubbedTime = scrubberRatio * audioElement.duration;
+      audioElement.currentTime = scrubbedTime;
+      break;
+    default:
+      break;
+  }
+}
 });
