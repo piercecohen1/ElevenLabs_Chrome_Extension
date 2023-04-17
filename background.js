@@ -10,7 +10,10 @@ chrome.contextMenus.onClicked.addListener(function (info) {
   if (info.menuItemId === "read-aloud") {
     chrome.storage.local.get("api_key", function (data) {
       const api_key = data.api_key;
-
+      if (!api_key) {
+        alert("Missing API key, go to the extension popup and enter a valid API key");
+        return;
+      }
       chrome.tabs.executeScript(
         {
           code: "window.getSelection().toString();",
