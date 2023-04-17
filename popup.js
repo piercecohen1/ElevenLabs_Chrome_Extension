@@ -42,11 +42,11 @@ document.getElementById("scrubber").addEventListener("input", function () {
     chrome.tabs.sendMessage(tabs[0].id, {
       action: "scrub",
       value: scrubberValue,
-    }, function () {
-      updateScrubberValue();
     });
   });
+  updateScrubberValue();
 });
+
 
 updateScrubberValue();
 
