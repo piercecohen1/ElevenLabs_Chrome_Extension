@@ -96,16 +96,6 @@ function sendCurrentTimeRatio() {
 
 audioElement.addEventListener("timeupdate", sendCurrentTimeRatio);
 
-// chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-//   if (request.action === "scrub") {
-//     const scrubberValue = request.value;
-//     const scrubberMax = 100;
-//     const scrubberRatio = scrubberValue / scrubberMax;
-//     const scrubbedTime = scrubberRatio * audioElement.duration;
-//     audioElement.currentTime = scrubbedTime;
-//   }
-// });
-
 chrome.runtime.onConnect.addListener(port => {
   if (port.name === 'popup') {
     port.onMessage.addListener(messageHandler);
@@ -120,13 +110,13 @@ function messageHandler(message, port){
     case 'toggle-playback':
       toggleAudioPlayback();
       break;
-    case 'scrub':
-      const scrubberValue = message.value;
-      const scrubberMax = 100;
-      const scrubberRatio = scrubberValue / scrubberMax;
-      const scrubbedTime = scrubberRatio * audioElement.duration;
-      audioElement.currentTime = scrubbedTime;
-      break;
+    // case 'scrub':
+    //   const scrubberValue = message.value;
+    //   const scrubberMax = 100;
+    //   const scrubberRatio = scrubberValue / scrubberMax;
+    //   const scrubbedTime = scrubberRatio * audioElement.duration;
+    //   audioElement.currentTime = scrubbedTime;
+    //   break;
     default:
       break;
   }
