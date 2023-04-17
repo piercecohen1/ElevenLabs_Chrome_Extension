@@ -9,10 +9,20 @@ function updateScrubberValue() {
 }
 
 function loadSettings() {
+  // Get API key
   chrome.storage.local.get("api_key", function (data) {
     const apiKey = data.api_key;
     if (apiKey) {
       document.getElementById("api-key").value = apiKey;
+    }
+  });
+  // Get playback speed
+  chrome.storage.sync.get("playback_speed", function (data) {
+    const playbackSpeed = data.playback_speed;
+    if (playbackSpeed) {
+      document.getElementById("playback-speed").value = playbackSpeed;
+    } else {
+      document.getElementById("playback-speed").value = 1;
     }
   });
 }
@@ -48,17 +58,21 @@ document.getElementById("scrubber").addEventListener("input", function () {
   updateScrubberValue();
 });
 
+document.getElementById("playback-speed").addEventListener("change", function () {
+  const playbackSpeed = parseFloat(this.value);
+  chrome.storage.sync.set({ playback_speed: playbackSpeed }, function () {
+    console.log("Playback speed saved:", playbackSpeed);
+  });
+});
 
 updateScrubberValue();
-
 loadSettings();
-
 continuouslyUpdateScrubberValue();
 
 document.addEventListener('DOMContentLoaded', function () {
   document.getElementById("playback-speed").addEventListener("change", function () {
     const playbackSpeed = parseFloat(document.getElementById("playback-speed").value);
-    chrome.storage.local.set({ playback_speed: playbackSpeed }, function () {
+    chrome.storage.sync.set({ playback_speed: playbackSpeed }, function () {
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         chrome.tabs.sendMessage(tabs[0].id, {
           action: "set-playback-speed",

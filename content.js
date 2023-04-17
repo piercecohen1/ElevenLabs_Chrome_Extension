@@ -12,8 +12,9 @@ chrome.runtime.onConnect.addListener(function (port) {
 let audioElement = new Audio();
 let playState = 'stopped';
 
-function playAudio(url) {
+function playAudio(url, playbackRate) {
   audioElement.src = url;
+  audioElement.playbackRate = playbackRate;
   audioElement.play();
   playState = 'playing';
 }
@@ -41,19 +42,23 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     const api_key = request.apiKey;
     const text = request.text;
 
-    getVoices(api_key)
-      .then((voices) => {
-        const voice_id = (voices.find(voice => voice.name === "Bella") || voices[0]).voice_id;
-        getTextToSpeechURL(voice_id, api_key, text)
-          .then((audioURL) => {
-            playAudio(audioURL);
-          })
-          .catch((error) => {
-            console.log(error);
-          });
-      })
-      .catch((error) => {
-        console.log(error);
+    chrome.storage.sync.get("playback_speed", function (data) {
+      const playbackRate = data.playback_speed || 1;
+
+      getVoices(api_key)
+        .then((voices) => {
+          const voice_id = (voices.find(voice => voice.name === "Bella") || voices[0]).voice_id;
+          getTextToSpeechURL(voice_id, api_key, text)
+            .then((audioURL) => {
+              playAudio(audioURL, playbackRate);
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        })
+        .catch((error) => {
+          console.log(error);
+        });
       });
     } else if (request.action === 'set-playback-speed') {
       const playbackSpeed = request.value;
@@ -91,15 +96,15 @@ function sendCurrentTimeRatio() {
 
 audioElement.addEventListener("timeupdate", sendCurrentTimeRatio);
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.action === "scrub") {
-    const scrubberValue = request.value;
-    const scrubberMax = 100;
-    const scrubberRatio = scrubberValue / scrubberMax;
-    const scrubbedTime = scrubberRatio * audioElement.duration;
-    audioElement.currentTime = scrubbedTime;
-  }
-});
+// chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+//   if (request.action === "scrub") {
+//     const scrubberValue = request.value;
+//     const scrubberMax = 100;
+//     const scrubberRatio = scrubberValue / scrubberMax;
+//     const scrubbedTime = scrubberRatio * audioElement.duration;
+//     audioElement.currentTime = scrubbedTime;
+//   }
+// });
 
 chrome.runtime.onConnect.addListener(port => {
   if (port.name === 'popup') {
