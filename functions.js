@@ -10,7 +10,6 @@ async function getVoices(apiKey) {
     const response = await fetch(url, requestOptions);
     if (response.status === 200) {
       const data = await response.json();
-      console.log("Get voices response:", data);
       return data.voices;
     } else {
       throw new Error(`Error: ${response.statusText}`);
@@ -31,7 +30,6 @@ async function getVoices(apiKey) {
     const response = await fetch(apiEndpoint, requestOptions);
     if (response.status === 200) {
       const audioArrayBuffer = await response.arrayBuffer();
-      console.log("Play audio response:", response);  // Added log statement
  
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const audioBuffer = await audioContext.decodeAudioData(audioArrayBuffer);

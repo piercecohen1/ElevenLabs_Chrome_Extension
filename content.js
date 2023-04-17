@@ -1,3 +1,14 @@
+let popupPort = null;
+
+chrome.runtime.onConnect.addListener(function (port) {
+  if (port.name === 'popup') {
+    popupPort = port;
+    port.onDisconnect.addListener(function () {
+      popupPort = null;
+    });
+  }
+});
+
 let audioElement = new Audio();
 let playState = 'stopped';
 
@@ -16,6 +27,39 @@ function toggleAudioPlayback() {
     playState = 'playing';
   }
 }
+
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.action === 'toggle-playback') {
+    toggleAudioPlayback();
+  } else if (request.action === 'scrub') {
+    const scrubberValue = request.value;
+    const scrubberMax = 100;
+    const scrubberRatio = scrubberValue / scrubberMax;
+    const scrubbedTime = scrubberRatio * audioElement.duration;
+    audioElement.currentTime = scrubbedTime;
+  } else if (request.action === 'read-aloud') {
+    const api_key = request.apiKey;
+    const text = request.text;
+
+    getVoices(api_key)
+      .then((voices) => {
+        const voice_id = (voices.find(voice => voice.name === "Bella") || voices[0]).voice_id;
+        getTextToSpeechURL(voice_id, api_key, text)
+          .then((audioURL) => {
+            playAudio(audioURL);
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    } else if (request.action === 'set-playback-speed') {
+      const playbackSpeed = request.value;
+      audioElement.playbackRate = playbackSpeed;
+    }
+  });
 
 async function getTextToSpeechURL(voiceId, apiKey, text) {
   const apiEndpoint = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
@@ -47,6 +91,16 @@ function sendCurrentTimeRatio() {
 
 audioElement.addEventListener("timeupdate", sendCurrentTimeRatio);
 
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.action === "scrub") {
+    const scrubberValue = request.value;
+    const scrubberMax = 100;
+    const scrubberRatio = scrubberValue / scrubberMax;
+    const scrubbedTime = scrubberRatio * audioElement.duration;
+    audioElement.currentTime = scrubbedTime;
+  }
+});
+
 chrome.runtime.onConnect.addListener(port => {
   if (port.name === 'popup') {
     port.onMessage.addListener(messageHandler);
@@ -56,8 +110,8 @@ chrome.runtime.onConnect.addListener(port => {
   }
 });
 
-function messageHandler(message, port) {
-  switch (message.action) {
+function messageHandler(message, port){
+  switch(message.action) {
     case 'toggle-playback':
       toggleAudioPlayback();
       break;
